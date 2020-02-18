@@ -40,7 +40,6 @@
 namespace cc  = console_client;
 namespace clib  = cc::clibrary;
 
-#include <boost/shared_ptr.hpp>
 clib::pclsync_lib& clib::pclsync_lib::get_lib(){
   static clib::pclsync_lib g_lib;
   return g_lib;
@@ -49,14 +48,15 @@ clib::pclsync_lib& clib::pclsync_lib::get_lib(){
 psync_timer_t exit_timer=NULL;
 
 static std::string exec(const char* cmd){
-    boost::shared_ptr<FILE> pipe(popen(cmd, "r"), pclose);
+    FILE* pipe=popen(cmd, "r");
     if (!pipe) return "ERROR";
     char buffer[128];
     std::string result = "";
-    while (!feof(pipe.get())) {
-        if (fgets(buffer, 128, pipe.get()) != NULL)
+    while (!feof(pipe)) {
+        if (fgets(buffer, 128, pipe) != NULL)
             result += buffer;
     }
+    pclose(pipe);
     return result;
 }
 
@@ -106,22 +106,22 @@ void clib::pclsync_lib::do_get_pass_from_console(std::string& password)
 }
 
 void event_handler(psync_eventtype_t event, psync_eventdata_t eventdata){
- if (event<PEVENT_FIRST_USER_EVENT){
-    if (event&PEVENT_TYPE_FOLDER)
-      std::cout <<"folder event=" << event<<", syncid="<< eventdata.folder->syncid<<", folderid="<<eventdata.folder->folderid<<", name="
-         <<eventdata.folder->name<<", local="<<eventdata.folder->localpath<<", remote="<< eventdata.folder->remotepath<<std::endl;
-     else
-      std::cout <<"file event=" << event<<", syncid="<< eventdata.folder->syncid<<", file="<<eventdata.file->fileid<<", name="
-         << eventdata.file->name<<", local="<<eventdata.file->localpath<<", remote="<< eventdata.file->remotepath<<std::endl;
-  }
-  else if (event>=PEVENT_FIRST_SHARE_EVENT)
-    std::cout <<"share event=" << event<<", folderid="<< eventdata.share->folderid<<", sharename="<<eventdata.share->sharename<<
-                    ", email="<< eventdata.share->toemail<<", message="<<eventdata.share->message<<", userid="<< eventdata.share->userid<<
-                    ", shareid="<<eventdata.share->shareid<<", sharerequestid="<<eventdata.share->sharerequestid<<
-                    ", created="<<eventdata.share->created<<", canread="<<eventdata.share->canread<<", cancreate="<<eventdata.share->cancreate<<
-                    ", canmodify="<<eventdata.share->canmodify<<", candelete="<<eventdata.share->candelete<<std::endl;
-  else
-    std::cout <<"event" << event << std::endl;
+// if (event<PEVENT_FIRST_USER_EVENT){
+//    if (event&PEVENT_TYPE_FOLDER)
+//      std::cout <<"folder event=" << event<<", syncid="<< eventdata.folder->syncid<<", folderid="<<eventdata.folder->folderid<<", name="
+//         <<eventdata.folder->name<<", local="<<eventdata.folder->localpath<<", remote="<< eventdata.folder->remotepath<<std::endl;
+//     else
+//      std::cout <<"file event=" << event<<", syncid="<< eventdata.folder->syncid<<", file="<<eventdata.file->fileid<<", name="
+//         << eventdata.file->name<<", local="<<eventdata.file->localpath<<", remote="<< eventdata.file->remotepath<<std::endl;
+//  }
+//  else if (event>=PEVENT_FIRST_SHARE_EVENT)
+//    std::cout <<"share event=" << event<<", folderid="<< eventdata.share->folderid<<", sharename="<<eventdata.share->sharename<<
+//                    ", email="<< eventdata.share->toemail<<", message="<<eventdata.share->message<<", userid="<< eventdata.share->userid<<
+//                    ", shareid="<<eventdata.share->shareid<<", sharerequestid="<<eventdata.share->sharerequestid<<
+//                    ", created="<<eventdata.share->created<<", canread="<<eventdata.share->canread<<", cancreate="<<eventdata.share->cancreate<<
+//                    ", canmodify="<<eventdata.share->canmodify<<", candelete="<<eventdata.share->candelete<<std::endl;
+//  else
+//    std::cout <<"event" << event << std::endl;
 
   if (clib::pclsync_lib::get_lib().event_callback_) {
     clib::pclsync_lib::get_lib().event_callback_(event, eventdata);    
