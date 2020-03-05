@@ -26,6 +26,7 @@
  */
 #include <iostream>
 #include <string>
+#include <memory>
 #include <termios.h>
 #include <unistd.h>
 #include <stdio.h>
